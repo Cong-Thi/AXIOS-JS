@@ -7,7 +7,7 @@ function apiGetAccounts(searchTerm) {
            }
        });
    }
-   
+ 
    function apiAddAccount(account) {
        return axios({
               url: "https://62f50939535c0c50e76847f6.mockapi.io/education",

@@ -1,15 +1,17 @@
-let accounts = []
 getAccounts()
+let newAccounts =[]
 
 // Viết function getAccounts
 function getAccounts(searchTerm){
     apiGetAccounts(searchTerm)
     .then((response) => {
-        console.log(response.data);
+        //console.log(response.data);
         let accounts = response.data.map((account) => {
             return new Account(account.id, account.user, account.name, account.password, account.email ,account.image, account.type, account.language, account.describe)
         })
+        newAccounts = [...accounts];
         display(accounts);
+        
     })
     .catch((error) => {
         console.log(error);
@@ -27,6 +29,7 @@ function addAccount(account){
     })
     
 }
+
 
 // deleteAccount request API để xóa tài khoản
 function deleteAccount(accountID){
@@ -78,8 +81,6 @@ function display(accounts){
     },"")
     
     dom('#tblDanhSachNguoiDung').innerHTML = output
-
-    
 }
 
 function dom(selector){
@@ -100,12 +101,11 @@ function resetForm(){
 }
 
 
-
 // =============DOM================
 
 // Lắng nghe sự kiện click của button Thêm Mới và gọi tới calback function
 dom("#btnThemNguoiDung").addEventListener("click", ()=>{
-    resetForm()
+    
     
     // 1. Thay đổi heading  và hiển thị footer
     dom(".modal-title").innerHTML = "Thêm Người Dùng";
@@ -113,6 +113,7 @@ dom("#btnThemNguoiDung").addEventListener("click", ()=>{
         <button class="btn btn-secondary" data-dismiss="modal">Hủy</button>
         <button class="btn btn-primary" data-type="add">Thêm</button>
     `; 
+    resetForm()
 });
 
 dom(".modal-footer").addEventListener("click", (evt) => {
@@ -129,18 +130,24 @@ dom(".modal-footer").addEventListener("click", (evt) => {
     let language= dom("#loaiNgonNgu").value;
     let describe = dom("#MoTa").value;
     
-    let isValid = validateForm();
-    // Kiểm tra nếu form không hợp lệ => Kết thúc hàm
-    if (!isValid) {
-        return;
-    }
+   
     
     // Tạo object từ lớp đối tượng Account
     let account = new Account(null, user, name, password, email, image, type, language, describe)
 
     if(elementType === "add"){
+        let isValid = validateForm();
+        // Kiểm tra nếu form không hợp lệ => Kết thúc hàm
+        if (!isValid) {
+            return;
+        }
         addAccount(account);
-    } else if(elementType ==="update"){
+    } else if(elementType ==="update")
+    { let isValid = validateFormByUser();
+        // Kiểm tra nếu form không hợp lệ => Kết thúc hàm
+        if (!isValid) {
+            return;
+        }
         updateAccount(id, account)
     }
     resetForm();
@@ -176,29 +183,22 @@ dom("#tblNguoiDung").addEventListener("click", (evt) => {
     dom("#MoTa").value = account.describe;
     dom("#TaiKhoan").disabled = true;
 
-    let isValid = validateForm();
+    let isValid = validateFormByUser();
     // Kiểm tra nếu form không hợp lệ => Kết thúc hàm
     if (!isValid) {
         return;
     }
-    resetForm()
     })
-    
     .catch((error) => {
         console.log(error);
     });
-
-    
     }
-
-    
-    
-    
+  
 });
 
 // Lắng nghe sự kiện keydown của input search
 dom("#search").addEventListener("keydown", (evt) => {
-    console.log(evt.key);
+    //console.log(evt.key);
     // Kiểm tra không phải ký tự Enter => Kết thúc hàm
     if(evt.key !== "Enter") return;
     getAccounts(evt.target.value);
@@ -206,43 +206,27 @@ dom("#search").addEventListener("keydown", (evt) => {
 
 //======== Validation ========
 
-// Hàm kiểm tra User
-function validateUser() {
-    let user = dom("#TaiKhoan").value;
-    let spanEl = dom("#tbTaiKhoan");
-
-    // Kiểm tra rỗng
-    if (!user) {
-        spanEl.style.display = "Block"
-        spanEl.innerHTML = "Tên tài khoản không được để trống"
-        return false;
-    }
-    // Kiểm tra không được trùng
-    // if (!(validatecheckID(user))) {
-    //     spanEl.style.display = "Block";
-    //     spanEl.innerHTML = "Tài Khoản đã tồn tại"
-    //     return false;
-    //   }
-
-
-    spanEl.style.display = "none";
-    spanEl.innerHTML = ""
-    return true;
+// Hàm kiểm tra user
+function validateUser(){
+        let taiKhoan = dom("#TaiKhoan").value;
+        let spanEl = dom("#tbTaiKhoan");
+         if (!taiKhoan) {
+                       spanEl.style.display = "Block"
+                       spanEl.innerHTML = "Tài khoản không được để trống!";
+                       return false;
+                    }
+        let checkUser = newAccounts.filter((account) => {
+            return account.user === taiKhoan;  
+         });     
+        if(checkUser.length>0){
+            spanEl.style.display = "Block"
+                       spanEl.innerHTML = "Tài khoản đã tồn tại!";
+                       return false;
+        }
+         spanEl.style.display = "none";
+         spanEl.innerHTML = "";
+         return true;   
 }
-
-/* Check tài khoản giống nhau */
-// function validatecheckID(user) {
-//     let spanEl = dom("#tbTaiKhoan");
-//     let findId = accounts.find((account) =>{
-//       return account.user === user
-//     })
-//     if(findId) {
-//       spanEl.style.display = "Block";
-//       spanEl.innerHTML = "Tài Khoản đã tồn tại"
-//       return false;
-//     }
-//     return true
-//   }
 
 // Hàm kiểm tra họ tên
 function validateName() {
@@ -255,7 +239,7 @@ function validateName() {
         return false;
     }
     // Kiểm tra kiểu chữ
-    let regex = /^[A-Za-z]*$/
+    let regex = /^[A-Za-z]/
     if (!regex.test(name)) {
         spanEl.style.display = "Block"
         spanEl.innerHTML = "Họ tên không chứa số và ký tự đặc biệt"
@@ -384,7 +368,18 @@ function validateForm() {
     isValid = validateUser() & validateName() & validateEmail() & validatePassword() & validateImage() & validateType() & validateLanguage() & validateDescribe();
 
     if (!isValid) {
-        //alert("Form không hợp lệ");
+       // alert("Form không hợp lệ");
+        return false;
+    }
+    return true;
+}
+function validateFormByUser() {
+    // Kĩ thuật Đặt cờ hiệu, mặc định ban đầu xem như form hợp lệ
+    let isValid = true;
+    isValid =  validateName() & validateEmail() & validatePassword() & validateImage() & validateType() & validateLanguage() & validateDescribe();
+
+    if (!isValid) {
+       // alert("Form không hợp lệ");
         return false;
     }
     return true;
